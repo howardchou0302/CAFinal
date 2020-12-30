@@ -11,5 +11,6 @@ module RISCV(clk,
             mem_addr_I,
             mem_rdata_I);
 
+input clk, rst_n;
 
 endmodule
