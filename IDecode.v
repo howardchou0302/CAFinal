@@ -14,33 +14,39 @@ module IDecode(clk,
 	output [12:0] ctrl_signal  		;
 	output [31:0] immediate			;
     
-	// wire/reg 
-	reg [31:2] mem_addr_I        	;
-	reg [12:0] ctrl_signal  		;
-	reg [31:0] immediate			;
+	// wire/reg
+	wire [22:0] i_type				;
+	wire [ 4:0] i_format			; 
+	reg  [12:0] ctrl_signal  		;
+	reg  [31:0] immediate			;
 	
 	// Connect to your HW3 module
-	IFetch iFetch(.clk(clk), .rst_n(rst_n), .mem_addr_I(mem_addr_I), .mem_rdata_I(mem_rdata_I), .instruction_type(i_type), .instruction_format(i_format));
+	IFetch iFetch(.clk(clk), 
+	.rst_n(rst_n), 
+	.mem_addr_I(mem_addr_I), 
+	.mem_rdata_I(mem_rdata_I), 
+	.instruction_type(i_type), 
+	.instruction_format(i_format));
 
 	always @(*) begin
 		ctrl_signal = 13'b0;
 		if(i_format[0]) begin
 			ctrl_signal[11] = 1;
 			ctrl_signal[5] = 1;
-			immediate = $signed({r_data[31], r_data[19:12], r_data[20], r_data[30:21], 1'b0});
+			immediate = $signed({mem_rdata_I[31], mem_rdata_I[19:12], mem_rdata_I[20], mem_rdata_I[30:21], 1'b0});
 		end
 		else if(i_format[1]) begin
 			ctrl_signal[9] = 1;
 			ctrl_signal[12] = i_type[19];
-			immediate = $signed({r_data[31], r_data[7], r_data[30:25], r_data[11:8], 1'b0});
+			immediate = $signed({mem_rdata_I[31], mem_rdata_I[7], mem_rdata_I[30:25], mem_rdata_I[11:8], 1'b0});
 		end
 		else if(i_format[2]) begin
 			ctrl_signal[7] = 1;
 			ctrl_signal[4] = 1;
-			immediate = $signed({r_data[31:25], r_data[11:7]});
+			immediate = $signed({mem_rdata_I[31:25], mem_rdata_I[11:7]});
 		end
 		else if(i_format[3]) begin
-			immediate = $signed({r_data[31:20]});
+			immediate = $signed({mem_rdata_I[31:20]});
 			if(i_type[21]) begin
 				ctrl_signal[10] = 1;
 				ctrl_signal[5] = 1;
@@ -56,7 +62,7 @@ module IDecode(clk,
 			else if(i_type[13]) ctrl_signal[3:0] = 6;
 			else ctrl_signal[3:0] = 7;
 		end
-		else if(i_format[4]) begin
+		else begin
 			ctrl_signal[5] = 1;
 			if(i_type[8]) ctrl_signal[3:0] = 0;
 			else if(i_type[7]) ctrl_signal[3:0] = 8;
@@ -68,10 +74,14 @@ module IDecode(clk,
 			else if(i_type[1]) ctrl_signal[3:0] = 6;
 			else ctrl_signal[3:0] = 7;
 		end
-		else begin
-			immediate = 12'b0;
-			ctrl = 32'b0;
+	end
+
+	always @(posedge clk, negedge rst_n) begin
+		if(!rst_n) begin
+			ctrl_signal <= 0;
+			immediate <= 0;
 		end
+		else begin end
 	end
 
 endmodule
