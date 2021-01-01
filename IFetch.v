@@ -9,12 +9,11 @@ module IFetch(clk,
 			);
 
 input         clk, rst_n        ;
-output [31:2] mem_addr_I        ;
+output reg [31:2] mem_addr_I    ;
 input  [31:0] mem_rdata_I       ;
 output [22:0] instruction_type  ;
 output [ 4:0] instruction_format;
 
-reg [31:2] mem_addr_I           ;
 reg [22:0] instruction_type     ;
 reg [ 4:0] instruction_format   ;
 wire [ 6:0] opcode              ;
@@ -69,6 +68,17 @@ always @(*) begin
         end
         else if(func3 == 3'b110) instruction_type = 23'h2000;
         else instruction_type = 23'h1000;
+    end
+end
+
+always @(posedge clk, negedge rst_n) begin
+    if(!rst_n) begin
+	    mem_addr_I <= 0;
+        instruction_format <= 0;
+        instruction_type <= 0;
+    end
+    else begin
+        mem_addr_I <= mem_addr_I + 1;
     end
 end
 
