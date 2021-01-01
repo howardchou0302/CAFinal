@@ -40,7 +40,16 @@ module RISCV(clk,
     assign Rs2 = mem_rdata_I[24:20] ;
     
     always @(*) begin
-      
+        if(ctrl[11]) begin
+            
+        end
+        else if(ctrl[10]) begin
+            
+        end
+        else if(ctrl[9]) begin
+            
+        end
+        else addr_I = addr_I + 1;
     end
 
     always @(posedge clk or negedge rst_n) begin

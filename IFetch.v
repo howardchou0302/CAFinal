@@ -78,7 +78,7 @@ always @(posedge clk, negedge rst_n) begin
         instruction_type <= 0;
     end
     else begin
-        mem_addr_I <= mem_addr_I + 1;
+
     end
 end
 
