@@ -1,7 +1,8 @@
+`include "IFetch.v"
+
 module IDecode(clk,
             rst_n,
             // for mem_I
-            mem_addr_I,
             mem_rdata_I,
 			// for result output
 			ctrl_signal,
@@ -9,7 +10,6 @@ module IDecode(clk,
 			);
 
     input  	      clk, rst_n        ;
-    output [31:2] mem_addr_I        ;
     input  [31:0] mem_rdata_I       ;
 	output [12:0] ctrl_signal  		;
 	output [31:0] immediate			;
@@ -23,7 +23,6 @@ module IDecode(clk,
 	// Connect to your HW3 module
 	IFetch iFetch(.clk(clk), 
 	.rst_n(rst_n), 
-	.mem_addr_I(mem_addr_I), 
 	.mem_rdata_I(mem_rdata_I), 
 	.instruction_type(i_type), 
 	.instruction_format(i_format));
@@ -43,6 +42,7 @@ module IDecode(clk,
 		else if(i_format[2]) begin
 			ctrl_signal[7] = 1;
 			ctrl_signal[4] = 1;
+			ctrl_signal[5] = 0;
 			immediate = $signed({mem_rdata_I[31:25], mem_rdata_I[11:7]});
 		end
 		else if(i_format[3]) begin
@@ -53,7 +53,7 @@ module IDecode(clk,
 			end
 			else if(i_type[18]) ctrl_signal[8:4] = 5'h17;
 			else ctrl_signal[5:4] = 3;
-			if(i_type[16]) ctrl_signal[3:0] = 0;
+			if(i_type[16] || i_type[18]) ctrl_signal[3:0] = 0;
 			else if(i_type[11]) ctrl_signal[3:0] = 1;
 			else if(i_type[15]) ctrl_signal[3:0] = 2;
 			else if(i_type[14]) ctrl_signal[3:0] = 4;
@@ -74,14 +74,6 @@ module IDecode(clk,
 			else if(i_type[1]) ctrl_signal[3:0] = 6;
 			else ctrl_signal[3:0] = 7;
 		end
-	end
-
-	always @(posedge clk, negedge rst_n) begin
-		if(!rst_n) begin
-			ctrl_signal <= 0;
-			immediate <= 0;
-		end
-		else begin end
 	end
 
 endmodule

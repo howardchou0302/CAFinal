@@ -1,4 +1,7 @@
 // Your code
+`include "IDecode.v"
+`include "ALU.v"
+`include "Inv.v"
 
 module RISCV(clk,
             rst_n,
@@ -18,55 +21,73 @@ module RISCV(clk,
     output reg [31:2] mem_addr_D        ;
     output reg [63:0] mem_wdata_D       ;
 
-    reg    [63:0] Registers[31:0]   ;
-    reg    [31:2] addr_I            ;
-    reg           wen_D             ;
-    reg    [31:2] addr_D            ;
-    reg    [63:0] wdata_D           ;
-    wire   [ 4:0] Rs1, Rs2, Rd      ;
-    wire   [12:0] ctrl              ;
-    wire   [31:0] imm               ;
+    reg    [63:0] Regs[31:0]            ;
+    wire   [ 4:0] Rs1, Rs2, Rd          ;
+    wire   [12:0] ctrl                  ;
+    wire   [31:0] imm, inv_rdata        ;
+    wire          zero                  ;
+    wire   [63:0] data1, data2, result  ;
+    wire   [63:0] w_reg, mem2reg        ;
     integer i;
+
+    Inv inv(mem_rdata_I, inv_rdata);
 
     IDecode iDecode(.clk(clk), 
     .rst_n(rst_n), 
-    .mem_addr_I(addr_I),
-    .mem_rdata_I(mem_rdata_I),
+    .mem_rdata_I(inv_rdata),
     .ctrl_signal(ctrl),
     .immediate(imm));
 
-    assign Rd  = mem_rdata_I[11: 7] ;
-    assign Rs1 = mem_rdata_I[19:15] ;
-    assign Rs2 = mem_rdata_I[24:20] ;
-    
-    always @(*) begin
-        if(ctrl[11]) begin
-            
-        end
-        else if(ctrl[10]) begin
-            
-        end
-        else if(ctrl[9]) begin
-            
-        end
-        else addr_I = addr_I + 1;
-    end
+    ALU alu(
+        .data1(data1),
+        .data2(data2),
+        .result(result),
+        .ALUOp(ctrl[3:0]),
+        .zero(zero)
+    );
 
-    always @(posedge clk or negedge rst_n) begin
+    assign Rd  = inv_rdata[11: 7] ;
+    assign Rs1 = inv_rdata[19:15] ;
+    assign Rs2 = inv_rdata[24:20] ;
+    assign data1 = Regs[Rs1];
+    assign data2 = ctrl[4] ? $signed({imm}) : Regs[Rs2];
+    assign w_reg = mem2reg;
+    assign mem2reg = ctrl[6] ? mem_rdata_D: result;
+    
+    /*
+    always @(*) begin
+        if(ctrl[5] && Rd) Regs[Rd] = w_reg;
+        else begin
+        end
+        mem_wen_D = ctrl[7];
+        mem_wdata_D = data2;
+        mem_addr_D = result[31:2];
+    end
+    */
+
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) begin
-            for(i = 0; i < 32; i = i+1) Registers[i] <= 64'b0;
+            for(i = 0; i < 32; i = i+1) begin 
+                Regs[i] <= 64'b0;
+            end
             mem_addr_I <= 30'b0;
             mem_addr_D <= 30'b0;
-            mem_wen_D <= 0;
-            mem_wdata_D <= 0;
+            mem_wen_D <= 1'b0;
+            mem_wdata_D <= 64'b0;
         end
         else begin
-            mem_addr_D <= addr_D;
-            mem_addr_I <= addr_I;
-            mem_wdata_D <= wdata_D;
-            mem_wen_D <= wen_D;
+            if(ctrl[10]) mem_addr_I <= data1[31:2] + imm;
+            else if(ctrl[11] || (ctrl[9] && (zero == ctrl[12]))) mem_addr_I <= mem_addr_I + (imm >>> 2);
+            else mem_addr_I = mem_addr_I + 1;
+            if(ctrl[10] || ctrl[11] && Rd) Regs[Rd] <= $unsigned({(mem_addr_I), 2'b0}) +4;
+            else begin end
+            if(ctrl[5] && Rd) Regs[Rd] = w_reg;
+            else begin
+            end
+            mem_wen_D <= ctrl[7];
+            mem_wdata_D <= data2;
+            mem_addr_D <= result[31:2];
         end
     end
-
 
 endmodule
