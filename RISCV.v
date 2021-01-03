@@ -22,15 +22,18 @@ module RISCV(clk,
     output reg [63:0] mem_wdata_D       ;
 
     reg    [63:0] Regs[31:0]            ;
+    reg    [31:2] PC                    ;
+    wire   [31:2] jump                  ;
     wire   [ 4:0] Rs1, Rs2, Rd          ;
     wire   [12:0] ctrl                  ;
     wire   [31:0] imm, inv_rdata        ;
     wire          zero                  ;
     wire   [63:0] data1, data2, result  ;
-    wire   [63:0] w_reg, mem2reg        ;
+    wire   [63:0] w_reg, mem2reg, addr  ;
+    wire   [63:0] inv_r, inv_w          ;
     integer i;
 
-    Inv inv(mem_rdata_I, inv_rdata);
+    Inv32 inv(mem_rdata_I, inv_rdata);
 
     IDecode iDecode(.clk(clk), 
     .rst_n(rst_n), 
@@ -46,24 +49,29 @@ module RISCV(clk,
         .zero(zero)
     );
 
+    Inv64 invR(mem_rdata_D, inv_r);
+    Inv64 invW(Regs[Rs2], inv_w);
+
     assign Rd  = inv_rdata[11: 7] ;
     assign Rs1 = inv_rdata[19:15] ;
     assign Rs2 = inv_rdata[24:20] ;
     assign data1 = Regs[Rs1];
     assign data2 = ctrl[4] ? $signed({imm}) : Regs[Rs2];
-    assign w_reg = mem2reg;
-    assign mem2reg = ctrl[6] ? mem_rdata_D: result;
+    assign addr = mem_addr_I + 1;
+    assign w_reg = (ctrl[11] || ctrl[10]) ? $unsigned({addr, 2'b0}) : mem2reg;
+    assign jump = (ctrl[11] || (ctrl[9] && (ctrl[12] == zero))) ? mem_addr_I + imm[31:2] : addr;
+    assign mem2reg = ctrl[6] ? inv_r: result;
     
-    /*
+    
     always @(*) begin
-        if(ctrl[5] && Rd) Regs[Rd] = w_reg;
-        else begin
-        end
-        mem_wen_D = ctrl[7];
-        mem_wdata_D = data2;
+        case(ctrl[10])
+            1'b0: PC = jump;
+            1'b1: PC = data1[31:2] + imm[31:2];
+        endcase
         mem_addr_D = result[31:2];
+        mem_wen_D = ctrl[7];
+        mem_wdata_D = inv_w;
     end
-    */
 
     always @(posedge clk, negedge rst_n) begin
         if(!rst_n) begin
@@ -76,17 +84,9 @@ module RISCV(clk,
             mem_wdata_D <= 64'b0;
         end
         else begin
-            if(ctrl[10]) mem_addr_I <= data1[31:2] + imm;
-            else if(ctrl[11] || (ctrl[9] && (zero == ctrl[12]))) mem_addr_I <= mem_addr_I + (imm >>> 2);
-            else mem_addr_I = mem_addr_I + 1;
-            if(ctrl[10] || ctrl[11] && Rd) Regs[Rd] <= $unsigned({(mem_addr_I), 2'b0}) +4;
+            mem_addr_I <= PC;
+            if(Rd && ctrl[5]) Regs[Rd] <= w_reg;
             else begin end
-            if(ctrl[5] && Rd) Regs[Rd] = w_reg;
-            else begin
-            end
-            mem_wen_D <= ctrl[7];
-            mem_wdata_D <= data2;
-            mem_addr_D <= result[31:2];
         end
     end
 
