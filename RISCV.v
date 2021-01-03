@@ -1,7 +1,7 @@
 // Your code
-`include "IDecode.v"
-`include "ALU.v"
-`include "Inv.v"
+//`include "IDecode.v"
+//`include "ALU.v"
+//`include "Inv.v"
 
 module RISCV(clk,
             rst_n,
@@ -79,9 +79,6 @@ module RISCV(clk,
                 Regs[i] <= 64'b0;
             end
             mem_addr_I <= 30'b0;
-            mem_addr_D <= 30'b0;
-            mem_wen_D <= 1'b0;
-            mem_wdata_D <= 64'b0;
         end
         else begin
             mem_addr_I <= PC;

@@ -1,4 +1,4 @@
-`include "IFetch.v"
+//`include "IFetch.v"
 
 module IDecode(clk,
             rst_n,
@@ -29,6 +29,7 @@ module IDecode(clk,
 
 	always @(*) begin
 		ctrl_signal = 13'b0;
+		immediate =   $signed({mem_rdata_I[31:20]});
 		if(i_format[0]) begin
 			ctrl_signal[11] = 1;
 			ctrl_signal[5] = 1;
@@ -36,7 +37,7 @@ module IDecode(clk,
 		end
 		else if(i_format[1]) begin
 			ctrl_signal[9] = 1;
-			ctrl_signal[12] = i_type[19];
+			ctrl_signal[12] = i_type[20];
 			immediate = $signed({mem_rdata_I[31], mem_rdata_I[7], mem_rdata_I[30:25], mem_rdata_I[11:8], 1'b0});
 		end
 		else if(i_format[2]) begin

@@ -1,5 +1,5 @@
 # Import Design
-read_file -format verilog  "./RISCV.v"
+read_file -format verilog  "./RISCV.v IDecode.v IFetch.v ALU.v Inv.v"
 
 set DESIGN "RISCV"
 current_design [get_designs RISCV]
