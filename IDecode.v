@@ -38,6 +38,7 @@ module IDecode(clk,
 		else if(i_format[1]) begin
 			ctrl_signal[9] = 1;
 			ctrl_signal[12] = i_type[20];
+			ctrl_signal[3:0] = 8;
 			immediate = $signed({mem_rdata_I[31], mem_rdata_I[7], mem_rdata_I[30:25], mem_rdata_I[11:8], 1'b0});
 		end
 		else if(i_format[2]) begin
