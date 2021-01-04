@@ -1,4 +1,4 @@
-RTL pass cycle: 
-SYN pass cycle: 
-Total cell area: 
-A*T(Area*SYN pass cycle): 
+RTL pass cycle: 10
+SYN pass cycle: 9.65
+Total cell area: 153706.356340
+A*T(Area*SYN pass cycle): 1483266.33868
